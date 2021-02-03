@@ -19,9 +19,9 @@
 from machine import Pin, I2C, ADC
 from utime import sleep, ticks_ms
 
-led = Pin(25, machine.Pin.OUT)        # onboard_LED
-switch = Pin(4, machine.Pin.IN)       # onboard_switch wired TP6 wired to GP4
-i2c = I2C(0, scl=Pin(13), sda=Pin(12))
+led = Pin(25, machine.Pin.OUT)         # onboard_LED
+switch = Pin(4, machine.Pin.IN)        # onboard_switch wired TP6 wired to GP4
+i2c = I2C(0, scl=Pin(13), sda=Pin(12)) # AHT10 connected to pins 16 (SDA), 17 (SCL), 18 (Gnd) and 36 (3V3) 
 onboard_temp = ADC(4)
 count = 1
 cycle_time = 5
@@ -126,10 +126,10 @@ def flash_hundreds_tens_ones(arg, onesT = 0.3, tensT = 0.6, hundredsT = 1.8):
         sleep(hundredsT-tensT-onesT)
     
 def flash_temp_and_humidity():
-    temp_onboard = get_temp()
-    data = get_temp_and_humidity()
+    temp_onboard = get_temp()                    # onboard temp
+    data = get_temp_and_humidity()               # AHT10 sensor
     print("Onboard Temp is",temp_onboard,"I2C temp is",data[0],"I2C humidity is",data[1])
-    #print("Raw temp is",data[2],"Raw Humidity is",data[3])        # test only
+    #print("Raw temp is",data[2],"Raw Humidity is",data[3])        # test only, used for calibration
     flash_hundreds_tens_ones(data[0])
 
 def cycle_timer():
@@ -145,16 +145,16 @@ def intro():
     led_off()
     sleep(1)
 
-intro()
+intro()             # Flashes LED on initial start
 led_off()
-old_time = ticks_ms()
-time_diff = 0
-mode_num = 1
+old_time = ticks_ms()  # used for testing to check time to run code; used with cycle_timer() function
+time_diff = 0          # as above
+mode_num = 1           # default mode
 
 while False:
-    test = script
+    test = script     # test only
     
-while True:
+while True: # Runs whichever mode is selected
     switchval = switch.value()
     while switchval:
         if mode_num == 1:
@@ -190,7 +190,7 @@ while True:
                     heater(30, 30)
                     #heater(25, 5)   #test
         switchval = switch.value()
-    else:
+    else:   # Mode select or reset active
         if runaway_flag == 1 or timer_reached == 1:
             if runaway_flag == 1:
                 print('Heater control error reset')
