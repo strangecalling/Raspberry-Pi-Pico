@@ -1,20 +1,20 @@
 
-# pylint: disable=import-error
 # Pi Pico used for 3D printer enclosure heater control
 # AHT10 temp/humdity wired to I2C 0 on pins 12 and 13
-# on board switch (TP6) wired to GP4 to allow function select and reset
-# GPIO to be selected for 3.3V relay control of a 240V PTC heater and 12V Fan
+# On-board switch (TP6) wired to GP4 to allow function select and reset
+# On-board switch (GPIO25) used for mode indication, temperature, timer complete and thermal runaway error.
+# GPIO to be selected for 3.3V relay control of a 240V PTC heater element and 12V Fan
 # Thermal runaway detection and heater timer.
-# mode number is flashed on selection 
-# default mode (1) is heater off, also can flash temperature, eg. 22 degrees C slow flash twice (10's) fast flash twice (1's).
+# Mode number is flashed on selection 
+# Default mode (1) is heater off, also it flashes the temperature, eg. 22 degrees C, slow flash twice (10's), fast flash twice (1's).
 # Mode number also flashed.
-# mode 2 is set to 50 degrees C with 320 minutes timer (ABS prints)
-# mode 3 is set to 30 with 30 minutes timer (printer pre heat for cold or humid conditions)
+# Mode 2 is set to 50 degrees C with 320 minutes timer (ABS prints)
+# Mode 3 is set to 30 with 30 minutes timer (printer pre heat for cold or humid conditions)
 # The onboard LED is on while heating in Modes 2 and 3.
 # It also displays status for these modes continous flashing means timer is complete,
 # Fast flashing indicates the thermal runaway has detected a fault.
 # Press onboard switch for 1 second to reset the timer or fault and start heater. Thermal runaway pauses the timer.
-# reselecting a mode resets booth timer and fault.
+# Reselecting a mode resets both timer and fault.
 
 from machine import Pin, I2C, ADC
 from utime import sleep, ticks_ms
@@ -22,8 +22,7 @@ from utime import sleep, ticks_ms
 led = Pin(25, machine.Pin.OUT)        # onboard_LED
 switch = Pin(4, machine.Pin.IN)       # onboard_switch wired TP6 wired to GP4
 i2c = I2C(0, scl=Pin(13), sda=Pin(12))
-sensor_temp = ADC(4)
-CONVERSION_FACTOR = 3.3 / (65535)
+onboard_temp = ADC(4)
 count = 1
 cycle_time = 5
 previous_temp = 0
@@ -32,8 +31,8 @@ timer_reached = 0
 minute_counter = 0
 
 def get_temp():
-    reading = sensor_temp.read_u16() * CONVERSION_FACTOR
-    temperature = - (reading * 589.06) + 444.88
+    raw_temp = onboard_temp.read_u16() * 3.3 / (65535)
+    temperature = - (raw_temp * 589.06) + 444.88   # Calibrated to AHT10 sensor
     return temperature
 
 def num_formatted(num, places):
